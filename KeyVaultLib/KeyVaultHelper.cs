@@ -9,14 +9,12 @@ namespace KeyVaultLib
     {
         private const string VaultName = "https://mykeyvault.vault.azure.net/";
 
-        // async version is pointless
         public static string GetSecretValue(string secretName)
         {
             try
             {
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
                 var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-                //var secret = await keyVaultClient.GetSecretAsync(VaultName, secretName).ConfigureAwait(false);
                 var key = $"SECRET{secretName}";
                 var secret = CacheAsideHelper.GetOrAdd(async () => await keyVaultClient.GetSecretAsync(VaultName, secretName).ConfigureAwait(false), new TimeSpan(2, 0, 0), key);
                 return secret.Value;
