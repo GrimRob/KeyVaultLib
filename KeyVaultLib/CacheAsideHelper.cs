@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Azure.KeyVault.Models;
+using System;
 using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
@@ -74,14 +75,22 @@ namespace KeyVaultLib
             if (itemWrapper == null || DateTime.Now.Subtract(itemWrapper.InsertedAt).TotalSeconds >= expiresIn.TotalSeconds)
             {
                 ////expired or not in cache
-                var item = builder().Result;
-                var wrapper = new CacheItemWrapper
+                try
                 {
-                    InsertedAt = DateTime.Now,
-                    Item = item
-                };
-                MemoryCache.Default.Add(key, wrapper, DateTime.Now.AddSeconds(expiresIn.TotalSeconds));
-                return item;
+                    var item = builder().Result;
+                    var wrapper = new CacheItemWrapper
+                    {
+                        InsertedAt = DateTime.Now,
+                        Item = item
+                    };
+                    MemoryCache.Default.Add(key, wrapper, DateTime.Now.AddSeconds(expiresIn.TotalSeconds));
+                    return item;
+                }
+                catch (AggregateException ae)
+                {
+                    ae.Handle(e => { return e is KeyVaultErrorException; });
+                    return default(T);
+                }
             }
 
             return (T)itemWrapper.Item;
