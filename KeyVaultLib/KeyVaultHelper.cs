@@ -8,6 +8,7 @@ namespace KeyVaultLib
 {
     public static class KeyVaultHelper  
     {
+        // TODO - change url to match Azure keyvault name
         private const string VaultName = "https://mykeyvault.vault.azure.net/";
         private const int CacheHours = 2;
 
