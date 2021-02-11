@@ -2,8 +2,8 @@
 
 To get a secret:
 
-    var secretValue = KeyVaultHelper.GetSecretValue("MySecretName");
+    var secretValue = await KeyVaultHelper.GetSecretValueAsync("MySecretName");
 
  To get a certificate:
 
-    var certBundle = KeyVaultHelper.GetCertificateValue("MyCertName");
+    var certBundle = await KeyVaultHelper.GetCertificateValueAsync("MyCertName");

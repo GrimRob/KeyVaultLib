@@ -2,6 +2,7 @@
 using System;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Azure.KeyVault.Models;
+using System.Threading.Tasks;
 
 namespace KeyVaultLib
 {
@@ -16,14 +17,14 @@ namespace KeyVaultLib
         /// </summary>
         /// <param name="secretName"></param>
         /// <returns>The secret value or string.Empty if it does not exist</returns>
-        public static string GetSecretValue(string secretName)
+        public static async Task<string> GetSecretValueAsync(string secretName)
         {
             try
             {
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
                 var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
                 var key = $"SECRET{secretName}";
-                var secret = CacheAsideHelper.GetOrAdd(async () => await keyVaultClient.GetSecretAsync(VaultName, secretName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
+                var secret = await CacheAsideHelper.GetOrAddAsync(async () => await keyVaultClient.GetSecretAsync(VaultName, secretName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
                 return secret?.Value ?? string.Empty;
             }
             catch (KeyVaultErrorException ex)
@@ -39,14 +40,14 @@ namespace KeyVaultLib
         /// </summary>
         /// <param name="certName"></param>
         /// <returns>The certificate bundle or null if it does not exist</returns>
-        public static CertificateBundle GetCertificateValue(string certName)
+        public static async Task<CertificateBundle> GetCertificateValueAsync(string certName)
         {
             try
             {
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
                 var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
                 var key = $"CERT{certName}";
-                var cert = CacheAsideHelper.GetOrAdd(async () => await keyVaultClient.GetCertificateAsync(VaultName, certName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
+                var cert = await CacheAsideHelper.GetOrAddAsync(async () => await keyVaultClient.GetCertificateAsync(VaultName, certName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
                 return cert;
             }
             catch (KeyVaultErrorException ex)

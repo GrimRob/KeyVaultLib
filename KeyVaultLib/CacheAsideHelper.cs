@@ -61,7 +61,7 @@ namespace KeyVaultLib
             MemoryCache.Default.Add(key, wrapper, DateTime.Now.AddSeconds(expiresIn.TotalSeconds));
             return item;
         }
-        public static T GetOrAdd<T>(Func<Task<T>> builder, TimeSpan expiresIn, params string[] keys)
+        public static async Task<T> GetOrAddAsync<T>(Func<Task<T>> builder, TimeSpan expiresIn, params string[] keys)
         {
             var key = GetKey(keys);
             CacheItemWrapper itemWrapper = null;
@@ -76,7 +76,7 @@ namespace KeyVaultLib
                 ////expired or not in cache
                 try
                 {
-                    var item = builder().Result;
+                    var item = await builder();
                     var wrapper = new CacheItemWrapper
                     {
                         InsertedAt = DateTime.Now,
