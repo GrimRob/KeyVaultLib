@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.KeyVault.Models;
-using System;
+﻿using System;
 using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
@@ -88,8 +87,7 @@ namespace KeyVaultLib
                 }
                 catch (AggregateException ae)
                 {
-                    ae.Handle(e => { return e is KeyVaultErrorException; });
-                    return default(T);
+                    throw ae.InnerException;
                 }
             }
 
