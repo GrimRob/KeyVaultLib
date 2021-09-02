@@ -18,6 +18,10 @@ Change this line of code to match your keyvault's url (default is to end with va
     var secretValue = await KeyVaultHelper.GetSecretValueAsync("MySecretName");
     returns an empty string if it does not exist
 
+# To get a list of secrets:
+
+    var secrets = await KeyVaultHelper.GetSecretsListAsync()
+
 # To get a certificate:
 
     var certBundle = await KeyVaultHelper.GetCertificateValueAsync("MyCertName");

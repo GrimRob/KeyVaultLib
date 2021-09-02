@@ -10,7 +10,9 @@ namespace KeyVaultLib
     public static class KeyVaultHelper
     {
         // TODO - change url to match Azure keyvault name
-        private const string VaultName = "https://mykeyvault.vault.azure.net/";
+        private const string VaultName = "https://btbkeyvault.vault.azure.net/";
+        //private const string VaultName = "https://fishyeuwkv.vault.azure.net/";
+        //private const string VaultName = "https://mykeyvault.vault.azure.net/";
         private const int CacheHours = 2;
 
 
@@ -35,6 +37,22 @@ namespace KeyVaultLib
             return secretList;
         }
 
+
+        /// <summary>
+        /// Adds a list of secrets from the Vault to a new Vault
+        /// </summary>
+        /// <returns></returns>
+        public static async Task SetSecretsAsync(List<SecretItem> secrets, string newVault)
+        {
+            var keyVaultClient = GetClient();
+            foreach (var secret in secrets)
+            {
+                var secretName = secret.Identifier.Name;
+                var secretBundle = await keyVaultClient.GetSecretAsync(VaultName, secretName).ConfigureAwait(false);
+                if (secretBundle?.Value != null)
+                    await keyVaultClient.SetSecretAsync(newVault, secretName, secretBundle.Value).ConfigureAwait(false);
+            }
+        }
 
         /// <summary>
         /// Gets a secret from an Azure key vault
