@@ -8,22 +8,21 @@
 
 # How to use KeyVaultLib
 
-Change this line of code to match your keyvault's url (default is to end with vault.azure.net)
-   // TODO - change url to match Azure keyvault name
-   private const string VaultName = "https://mykeyvault.vault.azure.net/";
+    Create a new instance, passing your keyvault url
 
+    var kv = new KeyVaultHelper("https://mykeyvault.vault.azure.net");  
 
 # To get a secret:
 
-    var secretValue = await KeyVaultHelper.GetSecretValueAsync("MySecretName");
+    var secretValue = await kv.GetSecretValueAsync("MySecretName");
     returns an empty string if it does not exist
 
 # To get a list of secrets:
 
-    var secrets = await KeyVaultHelper.GetSecretsListAsync()
+    var secrets = await kv.GetSecretsListAsync()
 
 # To get a certificate:
 
-    var certBundle = await KeyVaultHelper.GetCertificateValueAsync("MyCertName");
+    var certBundle = await kv.GetCertificateValueAsync("MyCertName");
     returns null if it does not exist
 
