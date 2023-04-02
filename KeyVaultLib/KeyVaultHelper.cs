@@ -4,6 +4,7 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Azure.KeyVault.Models;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Net;
 
 namespace KeyVaultLib
 {
@@ -90,6 +91,7 @@ namespace KeyVaultLib
             try
             {
                 var keyVaultClient = GetClient();
+                System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 var key = $"CERT{certName}";
                 var cert = await CacheAsideHelper.GetOrAddAsync(async () => await keyVaultClient.GetCertificateAsync(_vaultName, certName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
                 return cert;
@@ -105,6 +107,7 @@ namespace KeyVaultLib
         {
             var azureServiceTokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             return keyVaultClient;
         }
     }
