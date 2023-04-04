@@ -4,25 +4,33 @@
 
    KeyVaultLib should work with .NET Core and Framework as it is written in C# netstandard2.0
 
-   Your vault should be configured to give access to the identity your code is running under. See https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/tutorial-windows-vm-access-nonaad
+   Your vault should be configured to give access to the identity your code is running under. See [tutorial-windows-vm-access-nonaad]( https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/tutorial-windows-vm-access-nonaad).
 
 # How to use KeyVaultLib
+ Create a new instance, passing your keyvault url
 
-    Create a new instance, passing your keyvault url
+```
+var kv = new KeyVaultHelper("https://mykeyvault.vault.azure.net");  
+```
 
-    var kv = new KeyVaultHelper("https://mykeyvault.vault.azure.net");  
+## To get a secret:
 
-# To get a secret:
+```
+var secretValue = await kv.GetSecretValueAsync("MySecretName");
+```
+*returns an empty string if it does not exist*
 
-    var secretValue = await kv.GetSecretValueAsync("MySecretName");
-    returns an empty string if it does not exist
+## To get a list of secrets:
 
-# To get a list of secrets:
+```
+var secrets = await kv.GetSecretsListAsync()
+```
 
-    var secrets = await kv.GetSecretsListAsync()
+## To get a certificate:
 
-# To get a certificate:
+```
+var certBundle = await kv.GetCertificateValueAsync("MyCertName");
+ ```
 
-    var certBundle = await kv.GetCertificateValueAsync("MyCertName");
-    returns null if it does not exist
+*returns null if it does not exist*
 
