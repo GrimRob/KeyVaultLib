@@ -7,6 +7,7 @@
    Your vault should be configured to give access to the identity your code is running under. See [tutorial-windows-vm-access-nonaad]( https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/tutorial-windows-vm-access-nonaad).
 
 # How to use KeyVaultLib
+
  Create a new instance, passing your keyvault url
 
 ```
@@ -34,3 +35,6 @@ var certBundle = await kv.GetCertificateValueAsync("MyCertName");
 
 *returns null if it does not exist*
 
+## Unit tests
+
+The environmment variable TEST_VaultName should point to the full url of your vault, e.g. https://myvault.vault.azure.net/

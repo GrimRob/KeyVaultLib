@@ -1,10 +1,11 @@
-﻿using Microsoft.Azure.KeyVault;
-using System;
-using Microsoft.Azure.Services.AppAuthentication;
-using Microsoft.Azure.KeyVault.Models;
+﻿using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Net;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Identity;
+using Azure;
+using Azure.Security.KeyVault.Certificates;
 
 namespace KeyVaultLib
 {
@@ -24,37 +25,29 @@ namespace KeyVaultLib
         /// Get a list of all the vault's secrets
         /// </summary>
         /// <returns>A List of the secrets</returns>
-        public async Task<List<SecretItem>> GetSecretsListAsync()
+        public List<SecretProperties> GetSecretsList()
         {
-            var keyVaultClient = GetClient();
-            var secretList = new List<SecretItem>();
-            var secrets = await keyVaultClient.GetSecretsAsync(_vaultName).ConfigureAwait(false);
-            while (secrets != null)
+            var keyVaultClient = GetSecretClient();
+            var secretList = new List<SecretProperties>();
+            var secrets = keyVaultClient.GetPropertiesOfSecrets();
+            foreach (var secret in secrets)
             {
-                foreach (var secret in secrets)
-                {
-                    secretList.Add(secret);
-                }
-                if (secrets.NextPageLink == null) break;
-                secrets = await keyVaultClient.GetSecretsNextAsync(secrets.NextPageLink).ConfigureAwait(false);
+                secretList.Add(secret);
             }
             return secretList;
         }
 
 
         /// <summary>
-        /// Adds a list of secrets from the Vault to a new Vault
+        /// Sets a list of secrets 
         /// </summary>
         /// <returns></returns>
-        public async Task SetSecretsAsync(List<SecretItem> secrets, string newVault)
+        public async Task SetSecretsAsync(List<KeyVaultSecret> secrets)
         {
-            var keyVaultClient = GetClient();
+            var keyVaultClient = GetSecretClient();
             foreach (var secret in secrets)
             {
-                var secretName = secret.Identifier.Name;
-                var secretBundle = await keyVaultClient.GetSecretAsync(_vaultName, secretName).ConfigureAwait(false);
-                if (secretBundle?.Value != null)
-                    await keyVaultClient.SetSecretAsync(newVault, secretName, secretBundle.Value).ConfigureAwait(false);
+                await keyVaultClient.SetSecretAsync(secret).ConfigureAwait(false);
             }
         }
 
@@ -68,14 +61,14 @@ namespace KeyVaultLib
         {
             try
             {
-                var keyVaultClient = GetClient();
+                var keyVaultClient = GetSecretClient();
                 var key = $"SECRET{secretName}";
-                var secret = await CacheAsideHelper.GetOrAddAsync(async () => await keyVaultClient.GetSecretAsync(_vaultName, secretName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
-                return secret?.Value ?? string.Empty;
+                var secret = await CacheAsideHelper.GetOrAdd(async () => await keyVaultClient.GetSecretAsync(secretName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
+                return secret?.Value?.Value ?? string.Empty;
             }
-            catch (KeyVaultErrorException ex)
+            catch (RequestFailedException ex)
             {
-                if (ex.Body.Error.Code == "SecretNotFound") return string.Empty;    // secret does not exist - return blank
+                if (ex.ErrorCode == "SecretNotFound") return string.Empty;    // secret does not exist - return blank
                 throw;
             }
         }
@@ -86,29 +79,34 @@ namespace KeyVaultLib
         /// </summary>
         /// <param name="certName"></param>
         /// <returns>The certificate bundle or null if it does not exist</returns>
-        public async Task<CertificateBundle> GetCertificateValueAsync(string certName)
+        public async Task<KeyVaultCertificateWithPolicy> GetCertificateValueAsync(string certName)
         {
             try
             {
-                var keyVaultClient = GetClient();
-                System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                var keyVaultClient = GetCertificateClient();
                 var key = $"CERT{certName}";
-                var cert = await CacheAsideHelper.GetOrAddAsync(async () => await keyVaultClient.GetCertificateAsync(_vaultName, certName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
+                var cert = await CacheAsideHelper.GetOrAdd(async () => await keyVaultClient.GetCertificateAsync(certName).ConfigureAwait(false), new TimeSpan(CacheHours, 0, 0), key);
                 return cert;
             }
-            catch (KeyVaultErrorException ex)
+            catch (RequestFailedException ex)
             {
-                if (ex.Body.Error.Code == "CertificateNotFound") return null;
+                if (ex.ErrorCode == "CertificateNotFound") return null;
                 throw;
             }
         }
 
-        private static KeyVaultClient GetClient()
+        private SecretClient GetSecretClient()
         {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            return keyVaultClient;
+            var secretClient = new SecretClient(vaultUri: new Uri(_vaultName), credential: new DefaultAzureCredential());
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            return secretClient;
+        }
+
+        private CertificateClient GetCertificateClient()
+        {
+            var certificateClient = new CertificateClient(vaultUri: new Uri(_vaultName), credential: new DefaultAzureCredential());
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            return certificateClient;
         }
     }
 }
