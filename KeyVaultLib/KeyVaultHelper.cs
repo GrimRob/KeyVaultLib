@@ -37,7 +37,6 @@ namespace KeyVaultLib
             return secretList;
         }
 
-
         /// <summary>
         /// Sets a list of secrets 
         /// </summary>
