@@ -1,6 +1,6 @@
 # What is KeyVaultLib
 
-   KeyVaultLib can be used to interact with Azure key vaults and provide functions to get items from a vault. It also caches the result (for 2 hours) to reduce external calls to the vault.
+   KeyVaultLib can be used to interact with Azure key vaults and provide functions to get pre-existing items from a vault. It also caches the result (for 2 hours) to reduce external calls to the vault.
 
    KeyVaultLib should work with .NET Core and Framework as it is written in C# netstandard2.0
 
