@@ -1,57 +1,61 @@
-using KeyVaultLib;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace TestProject1;
 
-[TestClass]
 public class KeyVaultHelperTests
 {
-    [TestMethod]
-    public void GetSecretListTest()
+    private IKeyVaultHelper _keyVaultHelper;
+
+    public KeyVaultHelperTests()
     {
-        var vault = Environment.GetEnvironmentVariable("TEST_VaultName");
-        var kv = new KeyVaultHelper(vault);
-        var list = kv.GetSecretsList();
-        Assert.IsTrue(list.Count > 0);
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();       
+        
+        _keyVaultHelper = new KeyVaultHelper(new CacheAsideHelper(), configuration);
     }
 
-    [TestMethod]
-    public async Task GetSecretAsyncTest()
+    [Fact]
+    public void GetSecretsList_ShouldReturnNonEmptyList()
     {
-        var vault = Environment.GetEnvironmentVariable("TEST_VaultName");
-        var kv = new KeyVaultHelper(vault);
-        var mySecret = await kv.GetSecretValueAsync("MySecret");
-        Assert.IsNotNull(mySecret);
+        var list = _keyVaultHelper.GetSecretsList();
+        list.Count.ShouldBeGreaterThan(0);
     }
 
-    [TestMethod]
-    public async Task GetNoSecretAsyncTest()
+    [Fact]
+    public async Task GetSecretAsync_ShouldReturnSecretValue()
     {
-        var vault = Environment.GetEnvironmentVariable("TEST_VaultName");
-        var kv = new KeyVaultHelper(vault);
-        var dhdhjdhjdhj = await kv.GetSecretValueAsync("dhdhjdhjdhj");
-        Assert.IsTrue(string.IsNullOrEmpty(dhdhjdhjdhj));
+        var mySecret = await _keyVaultHelper.GetSecretValueAsync("MySecret");
+        mySecret.ShouldNotBeEmpty();
     }
 
-    [TestMethod]
-    public async Task GetNoCertificateAsyncTest()
+    [Fact]
+    public async Task GetSecretAsync_ShouldReturnNullForNonExistentSecret()
     {
-        var vault = Environment.GetEnvironmentVariable("TEST_VaultName");
-        var kv = new KeyVaultHelper(vault);
-        var dhdhjdhjdhj = await kv.GetCertificateValueAsync("dhdhjdhjdhj");
-        Assert.IsNull(dhdhjdhjdhj);
+        var secret = await _keyVaultHelper.GetSecretValueAsync("NonExistentSecret");
+        secret.ShouldBeNullOrEmpty();
     }
 
-    [TestMethod]
-    public async Task SetSecretAsyncTest()
+    [Fact]
+    public async Task GetCertificateAsync_ShouldReturnNullForNonExistentCertificate()
     {
-        var vault = Environment.GetEnvironmentVariable("TEST_VaultName");
-        var kv = new KeyVaultHelper(vault);
+        var certificate = await _keyVaultHelper.GetCertificateValueAsync("NonExistentCertificate");
+        certificate.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task SetSecretAsync_ShouldStoreAndRetrieveSecret()
+    {
         var secrets = new List<Azure.Security.KeyVault.Secrets.KeyVaultSecret>
         {
             new Azure.Security.KeyVault.Secrets.KeyVaultSecret("test", "testValue")
         };
-        await kv.SetSecretsAsync(secrets);
-        var testValue = await kv.GetSecretValueAsync("test");
-        Assert.AreEqual("testValue", testValue);
+        await _keyVaultHelper.SetSecretsAsync(secrets);
+        var testValue = await _keyVaultHelper.GetSecretValueAsync("test");
+        testValue.ShouldBe("testValue");
     }
 }
