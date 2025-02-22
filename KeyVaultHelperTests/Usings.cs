@@ -1,1 +1,4 @@
-global using Microsoft.VisualStudio.TestTools.UnitTesting;
+global using KeyVaultLib;
+global using System;
+global using Shouldly;
+global using Xunit;
